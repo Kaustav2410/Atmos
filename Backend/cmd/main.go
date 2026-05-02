@@ -4,24 +4,17 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"encoding/json"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 	"os"
+	"github.com/Kaustav2410/backend/internal"
 )
 
 var logger *log.Logger
-func health(w http.ResponseWriter, r *http.Request){
-     logger.Println("Health method was invoked");
-	 response := map[string]string{"message":"Server is healthy"}
-	 w.Header().Set("Content-Type", "application/json")
-	 w.WriteHeader(http.StatusOK)
-	 json.NewEncoder(w).Encode(response)
-}
 
 func main(){
 	logger = log.Default()
-	mux:= http.NewServeMux()
+	var mux= http.NewServeMux()
 	_ = godotenv.Load()
 	// if envErr != nil {
 	// 	logger.Fatalln("Error loading .env file")
@@ -37,7 +30,7 @@ func main(){
         AllowedHeaders:   []string{"Content-Type", "Authorization"},
         AllowCredentials: true,
     })
-	mux.HandleFunc("/health",health);
+	routes.V1Routes(mux)
 	err:= http.ListenAndServe(PORT,c.Handler(mux));
 	if(errors.Is(err,http.ErrServerClosed)){
 		logger.Println("Server closed");
