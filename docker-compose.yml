@@ -1,0 +1,28 @@
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: go_api
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./backend/.env # Loads your Go environment variables
+    networks:
+      - atmos_network
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: react_app
+    ports:
+      - "5173:80" # Maps local 3000 to Nginx 80
+    depends_on:
+      - backend
+    networks:
+      - atmos_network
+
+networks:
+  atmos_network:
+    driver: bridge
