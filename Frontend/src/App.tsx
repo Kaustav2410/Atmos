@@ -1,18 +1,42 @@
 import { useEffect, useState } from 'react'
-
+import AqiPanel from './components/AQIPanel';
+import Header from './components/Header';
+import LocationStrip from './components/LocationStrip';
+import type {WeatherData, AirQualityData} from './types';
+import WeatherHero from './components/weatherCard';
 function App() {
-  const [message, setMessage] = useState("");
+  const [weatherData, setWeatherData] = useState<WeatherData| null>(null);
+  const [airQualityData, setAirQualityData] = useState<AirQualityData|null>(null);
   const [coordinates,setCoordinates] = useState({
     "Latitude":"22.390",
     "Longitude":"88.146",
   })
   const [isGPSAllowed,setIsGPSAllowed] = useState(false);
   useEffect(()=>{
-    const response = fetch("http://localhost:3000/health");
-    response.then(res=>res.json()).then(data=>{
-      setMessage(data.message);
-    })
-  },[])
+    if(isGPSAllowed){
+      const weatherResponse = fetch(`http://localhost:3000/weatherData?latitude=${coordinates.Latitude}&longitude=${coordinates.Longitude}`);
+      weatherResponse.then(res=>res.json()).then(data=>{
+        setWeatherData(data); 
+        
+      })   
+
+      const aqiResponse = fetch(`http://localhost:3000/airQualityData?latitude=${coordinates.Latitude}&longitude=${coordinates.Longitude}`);
+      aqiResponse.then((res)=>res.json()).then(data=>{
+        setAirQualityData(data) 
+      })
+    }
+    else if(!isGPSAllowed){
+      const weatherResponse = fetch("http://localhost:3000/weatherData");
+      weatherResponse.then(res=>res.json()).then(data=>{
+        setWeatherData(data);
+      })   
+
+      const aqiResponse = fetch("http://localhost:3000/airQualityData");
+      aqiResponse.then((res)=>res.json()).then(data=>{
+        setAirQualityData(data)
+      })
+    }
+  },[coordinates])
   function getLatLong(){
     if(navigator.geolocation){
       navigator.geolocation.getCurrentPosition(success,error)
@@ -38,19 +62,16 @@ function App() {
     }
   }
   return (
-    <div className="App">
-      Hello from Atmos.
-
+    <div className='bg-[#333537] text-[#bebeb4] flex flex-col justify-center items-center'>
+      <div className="App h-fit max-w-300 ">
+      <Header/>
+      {weatherData && <LocationStrip  data={weatherData}></LocationStrip>}
       <div>
-        Server Status : {message}
+        <button onClick={getLatLong}>Locate Me</button>
       </div>
-      <div>
-        <button onClick={getLatLong}>Get Current Location</button>
-        {isGPSAllowed && <div>
-          <p>Latitude: {coordinates.Latitude}</p>
-          <p>Longitude: {coordinates.Longitude}</p>
-        </div>}
-      </div>
+      {weatherData && <WeatherHero {...weatherData}/>}
+      {airQualityData && <AqiPanel {...airQualityData} />}
+    </div>
     </div>
   )
 }
